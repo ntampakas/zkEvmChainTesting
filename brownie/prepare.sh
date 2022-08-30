@@ -45,7 +45,11 @@ run_brownie_test () {
     if [ $? -ne 0 ]; then
         source ~/.profile
     fi
-    brownie run scripts/client.py --network ${NETWORK_ID}_BASE
+    if [ $NETWORK_ID = "TA" ]; then
+        brownie run scripts/client.py noninterctive --network ${NETWORK_ID}_BASE
+    else
+        brownie run scripts/client.py --network ${NETWORK_ID}_BASE
+    fi
 }
 
 main() {
