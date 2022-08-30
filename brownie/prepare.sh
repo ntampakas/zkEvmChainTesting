@@ -1,11 +1,12 @@
 #!/bin/bash
-#set -x
+set -x
 
 USER=$(whoami)
 ENV_FILE_NAME="environment.json"
 WORKING_DIR_NAME=$(basename $(pwd))
 NETWORK_ID=$1
 CHAIN_ID=$2
+PARAMS="/tmp/params"
 
 if [ ! $WORKING_DIR_NAME = "brownie" ]; then
     echo "Run this script from the brownie directory"
@@ -46,7 +47,12 @@ run_brownie_test () {
         source ~/.profile
     fi
     if [ $NETWORK_ID = "TA" ]; then
-        brownie run scripts/client.py noninterctive --network ${NETWORK_ID}_BASE
+        if [ -f $PARAMS ]; then
+            brownie run scripts/client.py noninterctive $PARAMS --network ${NETWORK_ID}_BASE
+            rm $PARAMS
+        else
+            brownie run scripts/client.py noninterctive --network ${NETWORK_ID}_BASE
+        fi
     else
         brownie run scripts/client.py --network ${NETWORK_ID}_BASE
     fi
