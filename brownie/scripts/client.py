@@ -25,6 +25,51 @@ jsonmap = json.load(open(f"{projectDir}/brownie/{env['deployments']}/map.json"))
 opcodeDF = ut.opCodes()
 user = os.getlogin()
 
+def noninteractive(op='SDIV', testenv='TA', degree=19, proof=True, numOfiterations=1000, step=100, stop=1001):
+    l2_w3 = Web3(Web3.HTTPProvider(env["rpcUrls"][f'{testenv}'"_BASE"]+"l2"))
+    l2_w3.middleware_onion.inject(geth_poa_middleware, layer=0)
+    cid = str(l2_w3.eth.chainId)
+    proverUrl = env["rpcUrls"][f'{testenv}'"_BASE"]+"prover"
+
+    # INSTANTIATE CONTRACT OBJECTS
+    checksdivaddr5 = jsonmap[cid]["CheckSdiv"][0]  
+    checksdiv = CheckSdiv.at(checksdivaddr5)
+
+    print('running noninteractive mode')
+
+    print('Checking prover status')
+    ongoingProofs = True
+    while ongoingProofs:
+        ongoingProofs = ut.getProverTasks(proverUrl)
+
+    print('Prover is now Idle. Proceeding...')
+
+    proofFailed = False
+
+    benchResult = []
+    while not proofFailed and numOfiterations <= stop:
+
+        print(f'Submitting Tx with {numOfiterations} iterations of {op}')
+        tx = ut.sendTx(numOfiterations,checksdiv,owner)
+        tr = ut.getTxTrace(tx)
+
+        sourceURL = "http://leader-testnet-geth:8545/"
+        # start = int(time.time())
+        # data=f'{{"jsonrpc":"2.0", "method":"proof", "params":[{tx.block_number},"{sourceURL}", false], "id":{tx.block_number}}}'
+        if proof:
+            stepResult,proofCompleted,proofFailed=ut.getProofState(proverUrl,sourceURL,tx,degree,numOfiterations,resultsDir,tr, op, step,opcodeDF)
+        else:
+             stepResult = {}
+
+        numOfiterations+=step
+
+        benchResult.append(stepResult)
+
+    with open(f'{resultsDir}/TxTrace-Degree-{degree}-{op}_{numOfiterations-step}.json', 'w') as writeme:
+        json.dump(tr, writeme)
+    with open(f'{resultsDir}/Result-Degree-{degree}-{op}_{numOfiterations-step}.json', 'w') as writeme:
+        json.dump(benchResult, writeme)
+
 def main():
     calibrate, op, d, testenv, degree, proof, numOfiterations, step, stop = ut.getUserInputs(env)
     l2_w3 = Web3(Web3.HTTPProvider(env["rpcUrls"][f'{testenv}'"_BASE"]+"l2"))
