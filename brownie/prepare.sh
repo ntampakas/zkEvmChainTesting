@@ -48,7 +48,7 @@ run_brownie_test () {
     fi
     if [ $NETWORK_ID = "TA" ]; then
         if [ -f $PARAMS ]; then
-            brownie run scripts/client.py noninteractive `echo $PARAMS` --network ${NETWORK_ID}_BASE
+            brownie run scripts/client.py noninteractive `cat $PARAMS` --network ${NETWORK_ID}_BASE
             rm $PARAMS
         else
             brownie run scripts/client.py noninteractive --network ${NETWORK_ID}_BASE
